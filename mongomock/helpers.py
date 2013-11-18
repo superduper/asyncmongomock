@@ -7,6 +7,11 @@ except ImportError:
     from mongomock.object_id import ObjectId
     RE_TYPE = type(re.compile(''))
 
+import logging
+log = logging.getLogger(__name__)
+import log as log_helpers
+
+log_helpers.enable_pretty_logging('INFO', log)
 
 #for Python 3 compatibility
 try:
@@ -39,11 +44,14 @@ def mimic_async(func):
         callback = kwargs.pop('callback', None)
         if callback:
             try:
+                log.debug("Async-Calling cb %s with a:%s, k:%s", func, args, kwargs)
                 result = func(*args, **kwargs)
                 callback((result, None))
             except Exception, e:
+                log.error("Caught exception %s", e, exc_info=True)
                 callback((None, e))
         else:
+            log.debug("Calling %s with a:%s, k:%s", func, args, kwargs)
             return func(*args, **kwargs)
     return wrapper
 
