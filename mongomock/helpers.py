@@ -37,11 +37,14 @@ def mimic_async(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         callback = kwargs.pop('callback', None)
-        result = func(*args, **kwargs)
         if callback:
-            callback(result)
+            try:
+                result = func(*args, **kwargs)
+                callback((result, None))
+            except Exception, e:
+                callback((None, e))
         else:
-            return result
+            return func(*args, **kwargs)
     return wrapper
 
 def mimic_async_cls(cls):

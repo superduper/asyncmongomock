@@ -47,14 +47,10 @@ class Collection(object):
     def __getattr__(self, name):
         return self.__getitem__(name)
 
-    def insert(self, data, callback=None):
+    def insert(self, data):
         if isinstance(data, list):
             return [self._insert(element) for element in data]
-        result = self._insert(data) 
-        if callback:
-            callback(result)
-        else: 
-            return result
+        return self._insert(data)
 
     def _insert(self, data):
 
@@ -81,7 +77,6 @@ class Collection(object):
         found = False
         updated_existing = False
         num_updated = 0
-        callback = kwargs.pop('callback', None)
         for existing_document in itertools.chain(self._iter_documents(spec), [None]):
             # the sentinel document means we should do an upsert
             if existing_document is None:
@@ -208,17 +203,13 @@ class Collection(object):
                 first = False
             if not multi:
                 break
-        result = {
+        return {
             text_type("connectionId"): self._Collection__database.connection._id,
             text_type("err"): None,
             text_type("ok"): 1.0,
             text_type("n"): num_updated,
             text_type("updatedExisting"): updated_existing,
         }
-        if callback:
-            callback(result)
-        else:
-            return result
 
     def _get_subdocument(self, existing_document, spec, nested_field_list):
         """
@@ -261,18 +252,14 @@ class Collection(object):
         # TODO: this looks a little too naive...
         return dict((k, v) for k, v in iteritems(doc) if not k.startswith("$"))
 
-    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None, callback=None):
+    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None):
         if filter is not None:
             _print_deprecation_warning('filter', 'spec')
             if spec is None:
                 spec = filter
         if as_class is None:
             as_class = dict
-        cursor = Cursor(self, functools.partial(self._get_dataset, spec, sort, fields, as_class), limit=limit)
-        if callback:
-            callback(cursor)
-        else:
-            return cursor
+        return Cursor(self, functools.partial(self._get_dataset, spec, sort, fields, as_class), limit=limit)
 
     def _get_dataset(self, spec, sort, fields, as_class):
         dataset = (self._copy_only_fields(document, fields, as_class) for document in self._iter_documents(spec))
@@ -395,24 +382,18 @@ class Collection(object):
     def find_one(self, spec_or_id=None, *args, **kwargs):
         # Allow calling find_one with a non-dict argument that gets used as
         # the id for the query.
-        callback = kwargs.pop('callback', None)
         if spec_or_id is None:
             spec_or_id = {}
         if not isinstance(spec_or_id, collections.Mapping):
             spec_or_id = {'_id':spec_or_id}
 
         try:
-            result = next(self.find(spec_or_id, *args, **kwargs)) 
+            return next(self.find(spec_or_id, *args, **kwargs))
         except StopIteration:
-            result = None
-        if callback:
-            callback(result)
-        else:
-            return result
+            return None
 
     def find_and_modify(self, query = {}, update = None, upsert = False, **kwargs):
         remove = kwargs.get("remove", False)
-        callback = kwargs.pop('callback', None)
         if kwargs.get("new", False) and remove:
             raise OperationFailure("remove and returnNew can't co-exist") # message from mongodb
 
@@ -432,34 +413,22 @@ class Collection(object):
             self.update({'_id':old['_id']}, update)
 
         if kwargs.get('new', False):
-            result = self.find_one({'_id':old['_id']})
-        result = old
-
-        if callback:
-            callback(result)
-        else:
-            return result
+            return  self.find_one({'_id':old['_id']})
+        return old
 
     def save(self, to_save, manipulate = True, safe = False, **kwargs):
-        callback = kwargs.pop('callback', None)
         if not isinstance(to_save, dict):
             raise TypeError("cannot save object of type %s" % type(to_save))
 
         if "_id" not in to_save:
-            result = self.insert(to_save)
+            return self.insert(to_save)
         else:
             self.update({"_id": to_save["_id"]}, to_save, True,
                         manipulate, safe, _check_keys = True, **kwargs)
-            result = to_save.get("_id", None)
-
-        if callback:
-            callback(result)
-        else:
-            return result
+            return to_save.get("_id", None)
 
     def remove(self, spec_or_id = None, search_filter = None):
         """Remove objects matching spec_or_id from the collection."""
-        callback = kwargs.pop('callback', None)
         if search_filter is not None:
             _print_deprecation_warning('search_filter', 'spec_or_id')
         if spec_or_id is None:
@@ -471,32 +440,20 @@ class Collection(object):
             doc_id = doc['_id']
             del self._documents[doc_id]
 
-        result = {
+        return {
             "connectionId": self._Collection__database.connection._id,
             "n": len(to_delete),
             "ok": 1.0,
             "err": None,
         }
 
-        if callback:
-            callback(result)
-        else:
-            return result
 
-    def count(self, callback=None):
+    def count(self):
         return len(self._documents)
-        if callback:
-            callback(result)
-        else:
-            return result
 
-    def drop(self, callback=None):
+    def drop(self):
         del self._documents
         self._documents = {}
-        if callback:
-            callback(result)
-        else:
-            return result
 
     def ensure_index(self, key_or_list, cache_for = 300, **kwargs):
         pass
