@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import time
 
@@ -60,6 +61,8 @@ def enable_pretty_logging(level="INFO", logger=None):
     This is called automaticaly by `tornado.options.parse_command_line`
     and `tornado.options.parse_config_file`.
     """
+    if not os.getenv('MONGOMOCK_DEBUG_LOG', None):
+        return
     if logger is None:
         logger = logging.getLogger()
     logger.setLevel(getattr(logging, level.upper()))
