@@ -1,4 +1,5 @@
 from .collection import Collection
+from .helpers import mimic_async
 
 class Database(object):
     def __init__(self, conn, name):
@@ -23,6 +24,7 @@ class Database(object):
     def connection(self):
         return self._Database__connection
 
+    @mimic_async
     def collection_names(self, include_system_collections=True):
         if include_system_collections:
             return list(self._collections.keys())
@@ -34,6 +36,7 @@ class Database(object):
 
         return result
 
+    @mimic_async
     def drop_collection(self, name_or_collection):
         try:
             # FIXME a better way to remove an entry by value ?

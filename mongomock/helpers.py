@@ -31,3 +31,23 @@ def _fields_list_to_dict(fields):
                             "each an instance of %s" % (basestring.__name__,))
         as_dict[field] = 1
     return as_dict
+
+def mimic_async(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        callback = kwargs.pop('callback', None)
+        result = func(*args, **kwargs)
+        if callback:
+            callback(result)
+        else:
+            return result
+    return wrapper
+
+def mimic_async_cls(decorator):
+    def decorate(cls):
+        for attr in cls.__dict__: # there's propably a better way to do this
+            if callable(getattr(cls, attr)):
+                if not attr.startswith('_'):
+                    setattr(cls, attr, mimic_async(getattr(cls, attr)))
+        return cls
+    return decorate
