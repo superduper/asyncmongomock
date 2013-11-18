@@ -260,7 +260,7 @@ class Collection(object):
         return dict((k, v) for k, v in iteritems(doc) if not k.startswith("$"))
 
     @mimic_async
-    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None, skip=None):
+    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None, skip=None, cursor_only=False):
         if filter is not None:
             _print_deprecation_warning('filter', 'spec')
             if spec is None:
@@ -269,6 +269,8 @@ class Collection(object):
             as_class = dict
         log.info("%s:%s selected cursor spec:%s", id(self), self, spec)
         cursor = Cursor(self, functools.partial(self._get_dataset, spec, sort, fields, as_class), limit=limit)
+        if cursor_only:
+            return cursor
         if skip:
             return [list(cursor.skip(skip))]
         else:
