@@ -45,8 +45,7 @@ def mimic_async(func):
     return wrapper
 
 def mimic_async_cls(cls):
-    for attr in cls.__dict__: # there's propably a better way to do this
-        if callable(getattr(cls, attr)):
-            if not attr.startswith('_'):
-                setattr(cls, attr, mimic_async(getattr(cls, attr)))
+    for attr, val in cls.__dict__.iteritems(): # there's propably a better way to do this
+        if callable(val) and not attr.startswith('_'):
+            cls.__dict__[attr] = mimic_async(val)
     return cls
