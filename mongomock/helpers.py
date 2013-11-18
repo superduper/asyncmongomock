@@ -44,11 +44,9 @@ def mimic_async(func):
             return result
     return wrapper
 
-def mimic_async_cls(decorator):
-    def decorate(cls):
-        for attr in cls.__dict__: # there's propably a better way to do this
-            if callable(getattr(cls, attr)):
-                if not attr.startswith('_'):
-                    setattr(cls, attr, mimic_async(getattr(cls, attr)))
-        return cls
-    return decorate
+def mimic_async_cls(cls):
+    for attr in cls.__dict__: # there's propably a better way to do this
+        if callable(getattr(cls, attr)):
+            if not attr.startswith('_'):
+                setattr(cls, attr, mimic_async(getattr(cls, attr)))
+    return cls
