@@ -48,7 +48,7 @@ class Connection(object):
             "ok" : 1
     }
 
-#Connection is now depricated, it's called MongoClient instead
+#Connection is now deprecated, it's called MongoClient instead
 class MongoClient(Connection):
     def stub(self):
         pass
