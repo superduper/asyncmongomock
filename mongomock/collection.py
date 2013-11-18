@@ -260,7 +260,7 @@ class Collection(object):
         return dict((k, v) for k, v in iteritems(doc) if not k.startswith("$"))
 
     @mimic_async
-    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None):
+    def find(self, spec = None, fields = None, filter = None, sort = None, timeout = True, limit = 0, snapshot = False, as_class = None, skip=None):
         if filter is not None:
             _print_deprecation_warning('filter', 'spec')
             if spec is None:
@@ -268,7 +268,11 @@ class Collection(object):
         if as_class is None:
             as_class = dict
         log.info("%s:%s selected cursor spec:%s", id(self), self, spec)
-        return Cursor(self, functools.partial(self._get_dataset, spec, sort, fields, as_class), limit=limit)
+        cursor = Cursor(self, functools.partial(self._get_dataset, spec, sort, fields, as_class), limit=limit)
+        if skip:
+            return [list(cursor.skip(skip))]
+        else:
+            return [list(cursor)]
 
     def _get_dataset(self, spec, sort, fields, as_class):
         dataset = (self._copy_only_fields(document, fields, as_class) for document in self._iter_documents(spec))
@@ -398,7 +402,7 @@ class Collection(object):
             spec_or_id = {'_id':spec_or_id}
 
         try:
-            return [next(self.find(spec_or_id, *args, **kwargs)), ]
+            return [next(iter(self.find(spec_or_id, *args, **kwargs)[0])), ]
         except StopIteration:
             return None
 
@@ -566,6 +570,7 @@ class Collection(object):
         return self.find().distinct(key)
 
 
+
 class Cursor(object):
     def __init__(self, collection, dataset_factory, limit=0):
         super(Cursor, self).__init__()
@@ -603,6 +608,7 @@ class Cursor(object):
             self._dataset = iter(sorted(self._dataset, key = lambda x:resolve_key_value(key_or_list, x), reverse = direction < 0))
         return self
 
+    @mimic_async
     def count(self):
         arr = [x for x in self._dataset]
         count = len(arr)

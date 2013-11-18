@@ -48,3 +48,12 @@ class Database(object):
                 del self._collections[name_or_collection]
         except:  # EAFP paradigm (http://en.m.wikipedia.org/wiki/Python_syntax_and_semantics)
             pass
+
+    @mimic_async
+    def command(self, cmd):
+        if "count" in cmd:
+            coll = cmd["count"]
+            if "query" in cmd:
+                return [dict(n=self[coll].find(cmd["query"]).count())]
+            else:
+                return [dict(n=self[coll].count())]

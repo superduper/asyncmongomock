@@ -1,5 +1,7 @@
 import itertools
 from .database import Database
+from mongomock.helpers import mimic_async
+
 
 class Connection(object):
 
@@ -19,8 +21,10 @@ class Connection(object):
         if db is None:
             db = self._databases[db_name] = Database(self, db_name)
         return db
+
     def __getattr__(self, attr):
         return self[attr]
+
 
     def __repr__(self):
         identifier = []
