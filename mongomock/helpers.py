@@ -1,5 +1,6 @@
 from functools import wraps
 import re
+import inspect
 
 try:
     from bson import (ObjectId, RE_TYPE)
@@ -34,10 +35,22 @@ def _fields_list_to_dict(fields):
     return as_dict
 
 def mimic_async(func):
+    arg_spec = inspect.getargspec(func)
     @wraps(func)
     def wrapper(*args, **kwargs):
-        callback = kwargs.pop('callback', None)
+        def get_callback_param():
+            pos = arg_spec.args.index('callback')
+            callback = kwargs.pop('callback', None)
+            if not callback:
+                try:
+                    return args[pos]
+                except IndexError:
+                    return None
+            else:
+                return callback
+
         result = func(*args, **kwargs)
+        callback = get_callback_param()
         if callback:
             callback(result)
         else:
