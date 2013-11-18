@@ -453,7 +453,7 @@ class Collection(object):
             spec_or_id = search_filter if search_filter else {}
         if not isinstance(spec_or_id, dict):
             spec_or_id = {'_id': spec_or_id}
-        to_delete = list(self.find(spec = spec_or_id))
+        to_delete = self.find(spec = spec_or_id)[0]
         for doc in to_delete:
             doc_id = doc['_id']
             del self._documents[doc_id]
