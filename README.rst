@@ -1,5 +1,7 @@
-Asyncmongo compatible mongomock implementation
-----------------------------------------------
+asyncmongomock
+--------------
+
+Asyncmongo and tornado compatible mongomock implementation
 
 
  
